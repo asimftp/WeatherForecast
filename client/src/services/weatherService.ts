@@ -1,11 +1,21 @@
 import { WeatherResponse, ForecastResponse } from "../types/weather";
+import API_CONFIG from "../config/api";
 
-// Environment variables or configuration should be used for API keys
-// Consider moving this to an environment variable in a production app
-const API_KEY = "60a689a67061620d8093314c1fd9ec6c";
-const BASE_URL = "https://api.openweathermap.org/data/2.5";
+// Types for the service
+export interface City {
+  name: string;
+  lat: number;
+  lon: number;
+  country: string;
+  state?: string;
+}
 
-// Improved cache implementation with type safety
+export interface ApiError extends Error {
+  status?: number;
+  isApiError: boolean;
+}
+
+// Cache implementation
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
@@ -15,7 +25,7 @@ class ApiCache {
   private cache = new Map<string, CacheEntry<any>>();
   private readonly cacheDuration: number;
 
-  constructor(cacheDurationMinutes = 10) {
+  constructor(cacheDurationMinutes = API_CONFIG.CACHE_DURATION_MINUTES) {
     this.cacheDuration = cacheDurationMinutes * 60 * 1000;
   }
 
@@ -51,7 +61,42 @@ class ApiCache {
 const apiCache = new ApiCache();
 
 /**
- * Get weather data for a location
+ * Creates an API error with additional properties
+ */
+function createApiError(message: string, status?: number): ApiError {
+  const error = new Error(message) as ApiError;
+  error.isApiError = true;
+  if (status) error.status = status;
+  return error;
+}
+
+/**
+ * Generic function to fetch data from the API with error handling
+ */
+async function fetchFromApi<T>(url: string): Promise<T> {
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      throw createApiError(
+        errorData.message || `API error: ${response.status} ${response.statusText}`,
+        response.status
+      );
+    }
+    
+    return await response.json();
+  } catch (error) {
+    if ((error as ApiError).isApiError) throw error;
+    
+    throw createApiError(
+      error instanceof Error ? error.message : 'Unknown error occurred while fetching data'
+    );
+  }
+}
+
+/**
+ * Get current weather data for a location
  * @param lat - Latitude
  * @param lon - Longitude
  * @returns Promise with weather data
@@ -65,27 +110,13 @@ export async function getWeather(lat: string, lon: string): Promise<WeatherRespo
     return cachedData;
   }
   
-  try {
-    const url = `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
-    const res = await fetch(url);
-    
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: res.statusText }));
-      throw new Error(errorData.message || `Failed to fetch weather data: ${res.status}`);
-    }
-    
-    const data = await res.json();
-    
-    // Cache the response
-    apiCache.set(cacheKey, data);
-    
-    return data;
-  } catch (error) {
-    console.error('Weather API error:', error);
-    throw error instanceof Error 
-      ? error 
-      : new Error('Unknown error occurred while fetching weather data');
-  }
+  const url = `${API_CONFIG.WEATHER_BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_CONFIG.WEATHER_API_KEY}&units=${API_CONFIG.DEFAULT_UNITS}`;
+  const data = await fetchFromApi<WeatherResponse>(url);
+  
+  // Cache the response
+  apiCache.set(cacheKey, data);
+  
+  return data;
 }
 
 /**
@@ -103,27 +134,13 @@ export async function getForecast(lat: string, lon: string): Promise<ForecastRes
     return cachedData;
   }
   
-  try {
-    const url = `${BASE_URL}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
-    const res = await fetch(url);
-    
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: res.statusText }));
-      throw new Error(errorData.message || `Failed to fetch forecast data: ${res.status}`);
-    }
-    
-    const data = await res.json();
-    
-    // Cache the response
-    apiCache.set(cacheKey, data);
-    
-    return data;
-  } catch (error) {
-    console.error('Forecast API error:', error);
-    throw error instanceof Error 
-      ? error 
-      : new Error('Unknown error occurred while fetching forecast data');
-  }
+  const url = `${API_CONFIG.WEATHER_BASE_URL}/forecast?lat=${lat}&lon=${lon}&appid=${API_CONFIG.WEATHER_API_KEY}&units=${API_CONFIG.DEFAULT_UNITS}`;
+  const data = await fetchFromApi<ForecastResponse>(url);
+  
+  // Cache the response
+  apiCache.set(cacheKey, data);
+  
+  return data;
 }
 
 /**
@@ -132,13 +149,7 @@ export async function getForecast(lat: string, lon: string): Promise<ForecastRes
  * @param forceRefresh - Whether to bypass cache
  * @returns Promise with geocoding data
  */
-export async function getGeocode(query: string, forceRefresh = false): Promise<Array<{
-  name: string;
-  lat: number;
-  lon: number;
-  country: string;
-  state?: string;
-}>> {
+export async function getGeocode(query: string, forceRefresh = false): Promise<City[]> {
   // Normalize the query
   const normalizedQuery = query.toLowerCase().trim();
   
@@ -146,13 +157,7 @@ export async function getGeocode(query: string, forceRefresh = false): Promise<A
   if (normalizedQuery.includes(',') && !forceRefresh) {
     // First, check if we have an exact cache match for this formatted name
     const exactCacheKey = `geocode-${normalizedQuery}`;
-    const exactCachedData = apiCache.get<Array<{
-      name: string;
-      lat: number;
-      lon: number;
-      country: string;
-      state?: string;
-    }>>(exactCacheKey);
+    const exactCachedData = apiCache.get<City[]>(exactCacheKey);
     
     if (exactCachedData) {
       return exactCachedData;
@@ -161,18 +166,12 @@ export async function getGeocode(query: string, forceRefresh = false): Promise<A
     // Try to find this exact query in all cached results
     const geocodeKeys = apiCache.getKeysByPattern('geocode-');
     for (const key of geocodeKeys) {
-      const value = apiCache.get<Array<{
-        name: string;
-        lat: number;
-        lon: number;
-        country: string;
-        state?: string;
-      }>>(key);
+      const value = apiCache.get<City[]>(key);
       
       if (value && Array.isArray(value)) {
         // Check each city in the cached results
         for (const city of value) {
-          const formattedName = `${city.name}${city.state ? `, ${city.state}` : ''}${city.country ? `, ${city.country}` : ''}`.toLowerCase();
+          const formattedName = formatCityName(city).toLowerCase();
           if (formattedName === normalizedQuery) {
             // Cache this formatted name for future use
             const result = [city];
@@ -189,18 +188,12 @@ export async function getGeocode(query: string, forceRefresh = false): Promise<A
     if (cityNameOnly !== normalizedQuery) {
       // Check if we have a cache for the simplified name
       const simpleCacheKey = `geocode-${cityNameOnly}`;
-      const simpleCachedData = apiCache.get<Array<{
-        name: string;
-        lat: number;
-        lon: number;
-        country: string;
-        state?: string;
-      }>>(simpleCacheKey);
+      const simpleCachedData = apiCache.get<City[]>(simpleCacheKey);
       
       if (simpleCachedData) {
         // Try to find a matching city in the cached results
         const matchingCity = simpleCachedData.find(city => {
-          const formattedName = `${city.name}${city.state ? `, ${city.state}` : ''}${city.country ? `, ${city.country}` : ''}`.toLowerCase();
+          const formattedName = formatCityName(city).toLowerCase();
           return formattedName === normalizedQuery;
         });
         
@@ -215,44 +208,36 @@ export async function getGeocode(query: string, forceRefresh = false): Promise<A
   
   // Return cached data if it's still valid and not forcing refresh
   if (!forceRefresh) {
-    const cachedData = apiCache.get<Array<{
-      name: string;
-      lat: number;
-      lon: number;
-      country: string;
-      state?: string;
-    }>>(cacheKey);
+    const cachedData = apiCache.get<City[]>(cacheKey);
     
     if (cachedData) {
       return cachedData;
     }
   }
   
-  try {
-    const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${API_KEY}`;
-    const res = await fetch(url);
-    
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({ message: res.statusText }));
-      throw new Error(errorData.message || `Failed to fetch location data: ${res.status}`);
-    }
-    
-    const data = await res.json();
-    
-    if (!Array.isArray(data)) {
-      throw new Error('Invalid response format from geocoding API');
-    }
-    
-    // Cache the response
-    apiCache.set(cacheKey, data);
-    
-    return data;
-  } catch (error) {
-    console.error('Geocode API error:', error);
-    throw error instanceof Error 
-      ? error 
-      : new Error('Unknown error occurred while fetching geocode data');
+  const url = `${API_CONFIG.GEO_BASE_URL}/direct?q=${encodeURIComponent(query)}&limit=${API_CONFIG.GEO_RESULTS_LIMIT}&appid=${API_CONFIG.WEATHER_API_KEY}`;
+  const data = await fetchFromApi<City[]>(url);
+  
+  if (!Array.isArray(data)) {
+    throw createApiError('Invalid response format from geocoding API');
   }
+  
+  // Deduplicate results
+  const uniqueCities: City[] = [];
+  const cityKeys = new Set<string>();
+  
+  for (const city of data) {
+    const key = `${city.name}-${city.state || ''}-${city.country}`;
+    if (!cityKeys.has(key)) {
+      cityKeys.add(key);
+      uniqueCities.push(city);
+    }
+  }
+  
+  // Cache the deduplicated response
+  apiCache.set(cacheKey, uniqueCities);
+  
+  return uniqueCities;
 }
 
 /**
@@ -261,5 +246,36 @@ export async function getGeocode(query: string, forceRefresh = false): Promise<A
  * @returns URL for the weather icon
  */
 export function getWeatherIcon(code: string): string {
-  return `https://openweathermap.org/img/wn/${code}@2x.png`;
+  return `${API_CONFIG.WEATHER_ICON_URL}/${code}@2x.png`;
 }
+
+/**
+ * Format a city name with state and country
+ * @param city - City object
+ * @returns Formatted city name
+ */
+export function formatCityName(city: City): string {
+  let formattedName = city.name;
+  if (city.state) formattedName += `, ${city.state}`;
+  if (city.country) formattedName += `, ${city.country}`;
+  return formattedName;
+}
+
+/**
+ * Clear the API cache
+ */
+export function clearCache(): void {
+  apiCache.clear();
+}
+
+// Export the weather service as a single object
+const weatherService = {
+  getWeather,
+  getForecast,
+  getGeocode,
+  getWeatherIcon,
+  formatCityName,
+  clearCache
+};
+
+export default weatherService; 
