@@ -45,3 +45,5 @@ dist-ssr
 .env.test.local
 .env.production.local
 /-d dist
+*.ps1
+*.bat

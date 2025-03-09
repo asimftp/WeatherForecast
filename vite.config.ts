@@ -9,7 +9,8 @@ const __dirname = dirname(__filename);
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
   const isProduction = command === 'build';
-  const base = isProduction ? './' : '/'; // Use relative paths for production builds
+  // Always use relative paths for production builds to work with GitHub Pages
+  const base = isProduction ? './' : '/'; 
   
   return {
     plugins: [
