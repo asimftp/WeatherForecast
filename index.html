@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-  <base href="/WeatherForecast/" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Weather Forecast - Get accurate weather forecasts for any location" />
@@ -31,20 +30,27 @@
       }(window.location))
     </script>
     <!-- End Single Page Apps for GitHub Pages -->
-    <script type="module" crossorigin src="./assets/index--qwlxtth.js"></script>
+    <script type="module" crossorigin src="./assets/index-7jF6ZbcB.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-Cuqy17jy.css">
-  </head>
+  
+  <script>
+    // Redirect non-hash paths to hash-based equivalents for GitHub Pages compatibility
+    (function() {
+      var pathname = window.location.pathname;
+      var search = window.location.search;
+      var hash = window.location.hash;
+      
+      // If this is a direct access to a path that should be handled by the router
+      if (pathname.indexOf('/WeatherForecast/') === 0 && pathname.length > '/WeatherForecast/'.length && !hash) {
+        // Convert the path to a hash route
+        var route = pathname.replace('/WeatherForecast/', '');
+        window.location.replace(window.location.origin + '/WeatherForecast/#' + route + search);
+      }
+    })();
+  </script>
+
+</head>
   <body>
     <div id="root"></div>
-    <script>
-    // Ensure proper base path for direct URL access
-    if (window.location.pathname.indexOf('/WeatherForecast') === 0 && 
-        window.location.pathname !== '/WeatherForecast/' && 
-        !window.location.pathname.startsWith('/WeatherForecast/?')) {
-      var path = window.location.pathname.substring('/WeatherForecast'.length);
-      if (path === '') path = '/';
-      window.history.replaceState(null, null, '/WeatherForecast' + (path.startsWith('/') ? path : '/' + path) + window.location.search + window.location.hash);
-    }
-  </script>
-</body>
+  </body>
 </html>
