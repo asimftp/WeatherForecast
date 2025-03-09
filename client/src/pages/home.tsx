@@ -64,7 +64,7 @@ const Home: React.FC<HomeProps> = ({ searchParams, onSearch }) => {
       return (
         <div className="text-center py-6 sm:py-8">
           <h2 className="text-lg sm:text-xl font-medium mb-2 text-gray-700 dark:text-gray-300">
-            Welcome to Weather Forecast
+           Chal Nikal Weather Forecast
           </h2>
           <p className="text-muted-foreground">
             Use the search bar above to find weather for any city
