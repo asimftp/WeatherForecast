@@ -47,3 +47,4 @@ dist-ssr
 /-d dist
 *.ps1
 *.bat
+/.breakpoints
