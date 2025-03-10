@@ -1,35 +1,22 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path, { dirname } from "path";
-import { fileURLToPath } from "url";
+import path from "path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// https://vitejs.dev/config/
-export default defineConfig(({ command }) => {
-  const isProduction = command === 'build';
-  // Always use relative paths for production builds to work with GitHub Pages
-  const base = isProduction ? './' : '/'; 
-  
-  return {
-    plugins: [
-      react(),
-    ],
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "client", "src"),
-      },
+export default defineConfig({
+  base: "/WeatherForecast/", // ✅ Ensure correct GitHub Pages path
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
     },
-    root: path.resolve(__dirname, "client"),
-    base, // Set the base path
-    build: {
-      outDir: path.resolve(__dirname, "dist"),
-      emptyOutDir: true,
-      // Ensure assets have the correct paths
-      assetsDir: "assets",
-      // Set public path to be relative
-      assetsInlineLimit: 0,
+  },
+  publicDir: "public",
+  build: {
+    outDir: "dist",
+    emptyOutDir: true,
+    assetsDir: "assets",
+    rollupOptions: {
+      input: path.resolve(__dirname, "index.html"), // ✅ Ensure Vite finds index.html
     },
-  };
+  },
 });

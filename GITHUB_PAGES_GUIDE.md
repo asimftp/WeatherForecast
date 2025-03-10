@@ -64,6 +64,11 @@ If GitHub Actions isn't working for you, you can manually deploy the site:
 
 8. Your site will be available at: `https://asimftp.github.io/WeatherForecast/`
 
+##
+npm run build
+node fix-paths.js
+npm run deploy
+
 ## Option 3: Using the gh-pages npm package
 
 If you're encountering issues with the above methods, you can try using the `gh-pages` npm package directly:
