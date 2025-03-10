@@ -1,66 +1,60 @@
 import fs from 'fs';
 import path from 'path';
 
-// Repository name - keep this consistent with package.json homepage
+// Repository name (must match GitHub Pages repo name)
 const repoName = 'WeatherForecast';
 
-// Path to the index.html file
-const indexPath = path.resolve('dist', 'index.html');
+// Paths
+const distDir = path.resolve('dist');
+const indexPath = path.join(distDir, 'index.html');
+const notFoundPath = path.join(distDir, '404.html');
+const redirectsPath = path.join('public', '_redirects');
+const distRedirectsPath = path.join(distDir, '_redirects');
 
-// Read the file
-let html = fs.readFileSync(indexPath, 'utf8');
+// ✅ 1. Fix asset paths in `index.html`
+if (fs.existsSync(indexPath)) {
+    let html = fs.readFileSync(indexPath, 'utf8');
 
-// Replace absolute paths with relative paths
-html = html.replace(new RegExp(`src="/${repoName}/`, 'g'), 'src="./');
-html = html.replace(new RegExp(`href="/${repoName}/`, 'g'), 'href="./');
+    // Convert absolute paths to relative paths for GitHub Pages
+    html = html.replaceAll(`src="/${repoName}/`, 'src="./');
+    html = html.replaceAll(`href="/${repoName}/`, 'href="./');
 
-// Add a script to automatically redirect to hash-based routing
-// This prevents 404 errors on GitHub Pages by ensuring all routes are handled client-side
-const hashRedirectScript = `
-  <script>
-    // Redirect non-hash paths to hash-based equivalents for GitHub Pages compatibility
-    (function() {
-      var pathname = window.location.pathname;
-      var search = window.location.search;
-      var hash = window.location.hash;
-      
-      // If this is a direct access to a path that should be handled by the router
-      if (pathname.indexOf('/${repoName}/') === 0 && pathname.length > '/${repoName}/'.length && !hash) {
-        // Convert the path to a hash route
-        var route = pathname.replace('/${repoName}/', '');
-        window.location.replace(window.location.origin + '/${repoName}/#' + route + search);
-      }
-    })();
-  </script>
-`;
+    // ✅ 2. Insert hash-based redirect script (fixes GitHub Pages SPA routing)
+    const hashRedirectScript = `
+    <script>
+      (function() {
+        var pathname = window.location.pathname;
+        var search = window.location.search;
+        var hash = window.location.hash;
+        
+        if (pathname.startsWith('/${repoName}/') && pathname.length > '/${repoName}/'.length && !hash) {
+          var route = pathname.replace('/${repoName}/', '');
+          window.location.replace(window.location.origin + '/${repoName}/#' + route + search);
+        }
+      })();
+    </script>`;
 
-// Insert the hash redirect script before the closing head tag
-html = html.replace('</head>', hashRedirectScript + '\n</head>');
+    html = html.replace('</head>', `${hashRedirectScript}\n</head>`);
 
-// Write the fixed content back to the file
-fs.writeFileSync(indexPath, html);
+    // Write the updated file
+    fs.writeFileSync(indexPath, html);
+    console.log('✅ Fixed asset paths in index.html');
+} else {
+    console.warn('⚠ index.html not found. Skipping path fixes.');
+}
 
-// Create or update 404.html
-const notFoundPath = path.resolve('dist', '404.html');
-let notFoundContent;
-
-// Create a new 404.html file that redirects to the main app with the original path as hash
-notFoundContent = `<!DOCTYPE html>
+// ✅ 3. Create `404.html` for GitHub Pages (ensures refresh works)
+const notFoundContent = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <title>Weather Forecast</title>
   <script>
-    // Redirect all 404s to the index.html with the path as a hash
-    var segmentCount = 1; // Adjust this based on your GitHub Pages setup
+    var segmentCount = 1; 
     var l = window.location;
     var path = l.pathname.slice(1).split('/').slice(segmentCount).join('/');
-    l.replace(
-      l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-      '/${repoName}/#/' + path +
-      (l.search ? l.search : '') +
-      (l.hash ? l.hash : '')
-    );
+    l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+      '/${repoName}/#/' + path + (l.search || '') + (l.hash || ''));
   </script>
 </head>
 <body>
@@ -68,20 +62,16 @@ notFoundContent = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// Write the 404.html file
 fs.writeFileSync(notFoundPath, notFoundContent);
+console.log('✅ Created/Updated 404.html');
 
-// Copy _redirects file to dist
-const redirectsPath = path.resolve('public', '_redirects');
-const distRedirectsPath = path.resolve('dist', '_redirects');
-
+// ✅ 4. Copy `_redirects` file for Netlify (if exists)
 if (fs.existsSync(redirectsPath)) {
-  fs.copyFileSync(redirectsPath, distRedirectsPath);
+    fs.copyFileSync(redirectsPath, distRedirectsPath);
+    console.log('✅ Copied _redirects file for Netlify.');
 } else {
-  // Create _redirects file if it doesn't exist
-  fs.writeFileSync(distRedirectsPath, '/* /index.html 200');
+    fs.writeFileSync(distRedirectsPath, '/* /index.html 200');
+    console.log('✅ Created default _redirects file.');
 }
 
-console.log('✅ Fixed asset paths in index.html');
-console.log('✅ Updated/created 404.html with hash-based redirect');
-console.log('✅ Added _redirects file for SPA routing'); 
+console.log('🎉 Fixes applied successfully!');

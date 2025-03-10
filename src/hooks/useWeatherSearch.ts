@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useToast } from "./useToast";
-import { useGeocode } from "./useWeather";
+import { useGeocode } from "./useWeatherData";
 import weatherService, { City } from "../services/weatherService";
 
 // Debounce delay in milliseconds
