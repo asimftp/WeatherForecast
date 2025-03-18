@@ -46,5 +46,4 @@ dist-ssr
 .env.production.local
 /-d dist
 *.ps1
-*.bat
 /.breakpoints
