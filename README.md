@@ -1,24 +1,26 @@
-# Weather Wizard
+# Weather Forecast
 
-A React-based weather application optimized for GitHub Pages deployment. Get accurate weather forecasts for any location.
+A modern React weather application providing accurate forecasts for locations worldwide. Built with performance and user experience in mind.
 
 ## Features
 
-- Search for cities worldwide
-- View current weather conditions
-- See 5-day weather forecast
-- Recent search history
-- Responsive design for all devices
-- Optimized for GitHub Pages deployment
+- Search for cities worldwide with autocomplete suggestions
+- View detailed current weather conditions
+- See 5-day/3-hour weather forecasts
+- Dark and light theme support
+- Mobile-responsive design
+- Optimized caching for better performance
+- Deployed on GitHub Pages
 
 ## Technologies Used
 
-- React 18
+- React 18.3
 - TypeScript
-- Vite
-- React Query for data fetching
+- Vite 6
+- TanStack React Query for efficient data fetching and caching
 - Tailwind CSS for styling
 - Radix UI for accessible components
+- Wouter for lightweight routing
 - OpenWeatherMap API for weather data
 
 ## Getting Started
@@ -32,29 +34,40 @@ A React-based weather application optimized for GitHub Pages deployment. Get acc
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/WeatherWizard.git
-   cd WeatherWizard
+   git clone https://github.com/asimftp/WeatherForecast.git
+   cd WeatherForecast
    ```
 
-2. Install dependencies:
+2. Create a `.env` file in the root directory with your OpenWeatherMap API key:
+   ```
+   VITE_WEATHER_API_KEY=your_api_key_here
+   ```
+   
+   > **Note:** The repository includes an `.env.example` file that you can use as a template. Simply copy it to a new file named `.env` and replace the placeholder values with your actual API key:
+   > ```bash
+   > cp .env.example .env
+   > ```
+   > Then edit the `.env` file with your API key. You can get a free API key by signing up at [OpenWeatherMap](https://openweathermap.org/api).
+
+3. Install dependencies:
    ```bash
    npm install
    ```
 
-3. Start the development server:
+4. Start the development server:
    ```bash
    npm run dev
    ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+5. Open your browser and navigate to `http://localhost:5173`
 
 ## Deployment to GitHub Pages
 
 This project is configured for easy deployment to GitHub Pages.
 
-1. Update the `homepage` field in `package.json` to match your GitHub Pages URL:
+1. The `homepage` field in `package.json` is already set to match the GitHub Pages URL:
    ```json
-   "homepage": "https://yourusername.github.io/WeatherWizard"
+   "homepage": "https://asimftp.github.io/WeatherForecast"
    ```
 
 2. Deploy to GitHub Pages:
@@ -62,35 +75,72 @@ This project is configured for easy deployment to GitHub Pages.
    npm run deploy
    ```
 
-This will build the project and publish it to the `gh-pages` branch of your repository.
+   This builds the project and publishes it to the `gh-pages` branch of your repository.
+
+3. Alternatively, you can use the provided deploy script:
+   ```bash
+   ./deploy.bat
+   ```
 
 ## Project Structure
 
 ```
 /
-├── client/                # Frontend code
-│   ├── public/            # Static assets
-│   ├── src/               # Source code
-│   │   ├── components/    # React components
-│   │   ├── hooks/         # Custom React hooks
-│   │   ├── lib/           # Utility functions
-│   │   ├── pages/         # Page components
-│   │   └── types/         # TypeScript type definitions
-│   └── index.html         # HTML template
-├── dist/                  # Build output
-├── package.json           # Project dependencies and scripts
-├── tsconfig.json          # TypeScript configuration
-├── vite.config.ts         # Vite configuration
-└── README.md              # Project documentation
+├── src/                  # Source code
+│   ├── components/       # React components
+│   │   ├── common/       # Shared UI components 
+│   │   ├── layout/       # Layout components like Header and Footer
+│   │   └── weather/      # Weather-specific components
+│   ├── contexts/         # React contexts including ThemeContext
+│   ├── hooks/            # Custom React hooks
+│   ├── pages/            # Page components
+│   ├── services/         # API services 
+│   ├── styles/           # Global styles
+│   ├── types/            # TypeScript type definitions
+│   ├── utils/            # Utility functions
+│   ├── config/           # Configuration files
+│   ├── App.tsx           # Main application component
+│   └── main.tsx          # Application entry point
+├── public/               # Static assets
+├── dist/                 # Build output
+├── .env                  # Environment variables (not in repo)
+├── .env.example          # Example environment variables
+├── vite.config.ts        # Vite configuration
+├── tailwind.config.ts    # Tailwind CSS configuration
+├── tsconfig.json         # TypeScript configuration
+├── package.json          # Project dependencies and scripts
+└── deploy.bat            # Deployment script
 ```
 
 ## API Usage
 
-This application uses the OpenWeatherMap API to fetch weather data. The API calls are made directly from the client with appropriate caching to minimize requests.
+This application uses the OpenWeatherMap API for:
+
+- Current weather data
+- 5-day/3-hour forecast
+- Geocoding (city search)
+- Reverse geocoding (getting city name from coordinates)
+
+API calls include intelligent caching to minimize requests and improve performance.
+
+## Features in Detail
+
+### Weather Data
+- Current temperature, feels like, humidity, pressure, wind speed and direction
+- Weather conditions with appropriate icons
+- Sunrise and sunset times
+- Detailed 5-day forecast with 3-hour intervals
+
+### User Experience
+- Automatic theme detection based on user's system preferences
+- Manual theme toggle
+- Responsive design that works on all devices
+- Recent search history
+- Error handling with user-friendly messages
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ## Acknowledgements
 
