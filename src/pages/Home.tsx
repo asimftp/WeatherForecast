@@ -19,16 +19,12 @@ const Home: React.FC<HomeProps> = ({ searchParams, onSearch }) => {
 
     // Update coordinates when searchParams change
     useEffect(() => {
-    console.log("Home component received searchParams:", searchParams);
-    
         if (searchParams) {
-      console.log("Setting coords and hasSearched to true");
             setCoords({ lat: searchParams.lat, lon: searchParams.lon });
             setHasSearched(true);
 
             // Update the selected city name if provided
             if (searchParams.cityName) {
-                console.log("Setting selected city name:", searchParams.cityName);
                 setSelectedCityName(searchParams.cityName);
             }
         }
@@ -59,7 +55,7 @@ const Home: React.FC<HomeProps> = ({ searchParams, onSearch }) => {
                         Welcome to Weather Forecast
                     </h2>
                     <p className="text-muted-foreground">Use the search bar above to find weather for any city</p>
-                </div>
+                        </div>
             );
         }
 
@@ -70,8 +66,8 @@ const Home: React.FC<HomeProps> = ({ searchParams, onSearch }) => {
                         <div className="h-4 bg-muted rounded w-3/4"></div>
                         <div className="h-8 bg-muted rounded w-1/2"></div>
                         <div className="h-4 bg-muted rounded w-full"></div>
-                    </div>
-                </Card>
+                            </div>
+                    </Card>
             );
         }
 

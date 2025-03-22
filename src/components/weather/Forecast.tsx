@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/Card";
+import weatherService from "@/services/weatherService";
 import { ForecastResponse } from "@/types/weather";
-import { getWeatherIcon } from "@/utils/weatherHelpers";
+import { format } from "date-fns";
 
 interface Props {
     forecast: ForecastResponse;
@@ -26,7 +27,7 @@ const Forecast: React.FC<Props> = ({ forecast }) => {
         const formattedDay = new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(
             new Date(dt * 1000)
         );
-        const weatherIcon = getWeatherIcon(weather[0].icon);
+        const weatherIcon = weatherService.getWeatherIcon(weather[0].icon);
         const temperature = Math.round(main.temp);
         const weatherDescription = weather[0].description;
 

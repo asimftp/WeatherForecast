@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/Card";
 import { WeatherResponse } from "@/types/weather";
-import { getWeatherIcon } from "@/utils/weatherHelpers";
+import weatherService from "@/services/weatherService";
 import { Thermometer, Droplets, Wind } from "lucide-react";
 
 interface Props {
@@ -19,7 +19,7 @@ export function CurrentWeather({ weather, selectedCityName }: Props) {
     const feelsLike = Math.round(weather.main.feels_like);
     const humidity = weather.main.humidity;
     const windSpeed = Math.round(weather.wind.speed);
-    const weatherIcon = getWeatherIcon(weather.weather[0].icon);
+    const weatherIcon = weatherService.getWeatherIcon(weather.weather[0].icon);
     const weatherDescription = weather.weather[0].description;
 
     // Memoized weather details
