@@ -30,17 +30,13 @@ const App: React.FC = () => {
 
   // Memoized search handler to prevent unnecessary re-renders
   const handleSearch = useCallback((lat: string, lon: string, cityName?: string) => {
-    console.log("App handleSearch called with:", { lat, lon, cityName });
-    
     // Validate parameters
     if (!lat || !lon) {
-      console.error("Invalid search parameters:", { lat, lon, cityName });
       return;
     }
     
     // Update search parameters
     setSearchParams({ lat, lon, cityName });
-    console.log("Search params updated:", { lat, lon, cityName });
   }, []);
 
   return (
